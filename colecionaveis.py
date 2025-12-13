@@ -2,8 +2,8 @@ import pygame
 import random
 
 class Colecionavel(pygame.sprite.Sprite):
-    def __init__(self, largura_tela, altura_tela, cor, tamanho):
-        super().__init__()
+    def inicializa(self, largura_tela, altura_tela, cor, tamanho):
+        super().inicializa()
         
         # cria a superfície do colecionável (quadrado da cor específica)
         self.image = pygame.Surface([tamanho, tamanho])
@@ -15,4 +15,5 @@ class Colecionavel(pygame.sprite.Sprite):
         self.rect.y = random.randrange(altura_tela - tamanho)
         
         # armazena a cor para a lógica de pontuação
+
         self.cor = cor
