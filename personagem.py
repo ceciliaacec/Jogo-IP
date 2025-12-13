@@ -1,9 +1,9 @@
 import pygame
 
 class Personagem(pygame.sprite.Sprite):
-    def __init__(self, x, y, cor, tamanho):
+    def inicializa(self, x, y, cor, tamanho):
         # inicializa o sprite base do pygame
-        super().__init__()
+        super().inicializa()
         
         # cria a superfície (a imagem) do personagem (quadrado branco)
         self.image = pygame.Surface([tamanho, tamanho])
@@ -36,4 +36,5 @@ class Personagem(pygame.sprite.Sprite):
         if self.rect.top < 0:
             self.rect.top = 0
         if self.rect.bottom > altura_tela:
+
             self.rect.bottom = altura_tela
