@@ -2,6 +2,7 @@ import pygame
 from personagem import Personagem 
 from colecionaveis import Colecionavel 
 import random
+
 pygame.init()
 
 # cores (pelo sistema RGB)
@@ -32,6 +33,7 @@ todos_sprites = pygame.sprite.Group()
 colecionaveis = pygame.sprite.Group()
 
 # 1) cria o personagem
+# NOTA: Assumimos que a classe Personagem foi ajustada para aceitar (x, y, cor, tamanho)
 jogador = Personagem(
     largura_tela // 2, 
     altura_tela // 2, 
@@ -54,6 +56,29 @@ for cor in cores_colecionaveis:
 rodando = True
 relogio = pygame.time.Clock()
 pontuacao = 0
+fonte = pygame.font.Font(None, 36) # Inicializa a fonte
+
+# -------------------------------------------------------------
+# NOVO: Dicionário para armazenar a contagem de cada cor (PERSISTENTE)
+# -------------------------------------------------------------
+contadores_cores = {
+    vermelho: 0,
+    verde: 0,
+    azul: 0,
+    amarelo: 0,
+    roxo: 0,
+    rosa: 0,
+}
+
+# NOVO: Mapeamento de RGB para nomes legíveis
+nomes_cores = {
+    vermelho: "Vermelho",
+    verde: "Verde",
+    azul: "Azul",
+    amarelo: "Amarelo",
+    roxo: "Roxo",
+    rosa: "Rosa",
+}
 
 # loop principal do jogo
 while rodando:
@@ -62,7 +87,7 @@ while rodando:
         if evento.type == pygame.QUIT:
             rodando = False
 
-    # 2) lógica do ogo 
+    # 2) lógica do jogo 
     # pega o estado de todas as teclas pressionadas (as setas para os lados e cima/baixo) 
     teclas = pygame.key.get_pressed()
     
@@ -70,31 +95,30 @@ while rodando:
     jogador.update(teclas, largura_tela, altura_tela)
 
     # verifica colisões: checa se o 'jogador' colidiu com algum sprite no grupo 'colecionaveis'.
-    # O 'True, True' significa que o sprite do jogador E os colecionáveis colididos são REMOVIDOS
+    # 'True, True' significa que o sprite do jogador E os colecionáveis colididos são REMOVIDOS
     coletas_encontradas = pygame.sprite.spritecollide(jogador, colecionaveis, True)
 
-    qtd_vermelho = qtd_azul = qtd_verde = qtd_amarelo = qtd_roxo = qtd_rosa = 0
     # processa as coletas
     for coleta in coletas_encontradas:
+        
+        # atualiza o contador no dicionário
+        if coleta.cor in contadores_cores:
+            contadores_cores[coleta.cor] += 1
+
+        # lógica de pontuação e incremento
         if coleta.cor == vermelho:
             pontuacao -= 5 
-            qtd_vermelho += 1
         elif coleta.cor == verde:
-            pontuacao += 15  
-            qtd_verde += 1   
+            pontuacao += 5 
         elif coleta.cor == azul:
-            pontuacao -= 20  
-            qtd_azul += 1
+            pontuacao -= 5 
         elif coleta.cor == amarelo:
-            pontuacao -= 25  
-            qtd_amarelo += 1
+            pontuacao -= 5 
         elif coleta.cor == roxo:
-            pontuacao += 30 
-            qtd_roxo += 1 
+            pontuacao += 5 
         elif coleta.cor == rosa:
-            pontuacao += 50  
-            qtd_rosa += 1
-                
+            pontuacao += 5 
+        
         # adiciona pontos por coletar
         print(f"Coletado! Pontuação: {pontuacao}")
         # remove o colecionável dos grupos
@@ -108,32 +132,64 @@ while rodando:
         todos_sprites.add(nova_coleta)
         
         # fim de jogo 
-        if pontuacao <= 0:
+        if pontuacao <= 0 or pontuacao >= 150:           
+            rodando = False 
             break
-            texto = fonte.render("Fim de Jogo! Pontuação Negativa.", True, branco)
-            tela.blit(texto, (largura_tela // 2 - 150, altura_tela // 2))
-            pygame.display.flip()
-            pygame.time.delay(3000)
-            rodando = False
-                   
-        
-    # 3) desenho na Tela
+            
+            
+    # 3) desenho na tela
     # fundo preto
     tela.fill(preto)
 
     # desenha todos os sprites nos seus grupos
     todos_sprites.draw(tela)
     
-    # pontuação
-    fonte = pygame.font.Font(None, 36)
-    texto = fonte.render(f"Pontos: {pontuacao}", True, branco)
-    
+    # pontuação total
+    texto_pontos = fonte.render(f"Pontos: {pontuacao}", True, branco)
+    tela.blit(texto_pontos, (10, 10))
 
-    tela.blit(texto, (10, 10))
+    posicao_y = 50 
+
+    for cor_rgb, contagem in contadores_cores.items():
+        if contagem > 0: # só mostra a quantidade daquela cor se for maior que zero
+            
+            # obtém o nome legível da cor no dicionário
+            nome_cor = nomes_cores.get(cor_rgb, "Desconhecida") 
+            
+            texto_contagem = f"{nome_cor}: {contagem}"
+            
+            # coloca o texto, usando a própria cor do colecionável para destaque
+            texto_renderizado = fonte.render(texto_contagem, True, cor_rgb)
+            
+            tela.blit(texto_renderizado, (10, posicao_y))
+            
+            # próxima linha
+            posicao_y += 30 
 
     pygame.display.flip()
 
     # frames por segundo
     relogio.tick(60)
 
+# tela de fim de jogo
+if not rodando and (pontuacao <= 0 or pontuacao >= 150):
+    # se o loop terminou por causa do 'pontuacao <= 0' ou 'pontuacao >=150' (fim de jogo)
+    tela.fill(preto)
+    if pontuacao < 0:
+        texto_fim = fonte.render("Fim de Jogo! Pontuação Negativa.", True, branco)
+        tela.blit(texto_fim, (largura_tela // 2 - texto_fim.get_width() // 2, altura_tela // 2))
+    elif pontuacao == 0:
+        texto_fim = fonte.render("Fim de Jogo! Você zerou a pontuação!", True, branco)
+        tela.blit(texto_fim, (largura_tela // 2 - texto_fim.get_width() // 2, altura_tela // 2))    
+    elif pontuacao >= 150:
+        texto_fim = fonte.render("Parabéns! Você alcançou 150 pontos!", True, branco)
+        tela.blit(texto_fim, (largura_tela // 2 - texto_fim.get_width() // 2, altura_tela // 2))
+        
+    texto_final_pontos = fonte.render(f"Pontuação Final: {pontuacao}", True, branco)
+    tela.blit(texto_final_pontos, (largura_tela // 2 - texto_final_pontos.get_width() // 2, altura_tela // 2 + 50))
+    
+    pygame.display.flip()
+    pygame.time.delay(3000) 
+
+# fim do Jogo
 pygame.quit()
