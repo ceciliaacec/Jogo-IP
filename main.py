@@ -15,6 +15,12 @@ amarelo = (255, 255, 0)
 roxo = (128, 0, 128) 
 rosa = (255, 0, 220)
 
+estado_do_jogo = "MENU" 
+rodando = True
+relogio = pygame.time.Clock()
+pontuacao = 0
+fonte = pygame.font.Font(None, 36)
+
 # dimensões da Tela
 largura_tela = 800
 altura_tela = 600
@@ -33,7 +39,7 @@ todos_sprites = pygame.sprite.Group()
 colecionaveis = pygame.sprite.Group()
 
 # 1) cria o personagem
-# NOTA: Assumimos que a classe Personagem foi ajustada para aceitar (x, y, cor, tamanho)
+# classe Personagem foi ajustada para aceitar (x, y, cor, tamanho)
 jogador = Personagem(
     largura_tela // 2, 
     altura_tela // 2, 
@@ -56,11 +62,8 @@ for cor in cores_colecionaveis:
 rodando = True
 relogio = pygame.time.Clock()
 pontuacao = 0
-fonte = pygame.font.Font(None, 36) # Inicializa a fonte
+fonte = pygame.font.Font(None, 36) # inicializa a fonte
 
-# -------------------------------------------------------------
-# NOVO: Dicionário para armazenar a contagem de cada cor (PERSISTENTE)
-# -------------------------------------------------------------
 contadores_cores = {
     vermelho: 0,
     verde: 0,
@@ -70,7 +73,7 @@ contadores_cores = {
     rosa: 0,
 }
 
-# NOVO: Mapeamento de RGB para nomes legíveis
+# mapeamento de RGB para nomes legíveis
 nomes_cores = {
     vermelho: "Vermelho",
     verde: "Verde",
@@ -80,8 +83,50 @@ nomes_cores = {
     rosa: "Rosa",
 }
 
+def exibir_menu():
+    # defina a variável global para poder alterar o estado
+    global estado_do_jogo, rodando
+    
+    menu_ativo = True
+    while menu_ativo:
+        # 1) desenho
+        tela.fill(preto)
+        
+        # renderiza título e opções
+        titulo = fonte.render("JOGO DE COLETA", True, branco)
+        iniciar = fonte.render("Pressione ENTER para Iniciar", True, verde)
+        
+        tela.blit(titulo, (largura_tela // 2 - titulo.get_width() // 2, altura_tela // 4))
+        tela.blit(iniciar, (largura_tela // 2 - iniciar.get_width() // 2, altura_tela // 2))
+        
+        # 2) Eventos do Menu
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                rodando = False # sair do loop principal
+                menu_ativo = False
+                
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_RETURN: # Se ENTER for pressionado
+                    estado_do_jogo = "JOGANDO"
+                    menu_ativo = False # sair do loop do menu
+
+        pygame.display.flip()
+        relogio.tick(60)
+
 # loop principal do jogo
 while rodando:
+    
+    if estado_do_jogo == "MENU":
+        # chama a função que desenha e processa a entrada do menu
+        exibir_menu()
+    
+    elif estado_do_jogo == "JOGANDO":
+        # 1) processamento das entradas (eventos)
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                rodando = False
+    
+    
     # 1) processamento das entradas (eventos)
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
@@ -176,10 +221,10 @@ if not rodando and (pontuacao <= 0 or pontuacao >= 150):
     # se o loop terminou por causa do 'pontuacao <= 0' ou 'pontuacao >=150' (fim de jogo)
     tela.fill(preto)
     if pontuacao < 0:
-        texto_fim = fonte.render("Fim de Jogo! Pontuação Negativa.", True, branco)
+        texto_fim = fonte.render("Fim de Jogo! Pontuação Negativa.", True, vermelho)
         tela.blit(texto_fim, (largura_tela // 2 - texto_fim.get_width() // 2, altura_tela // 2))
     elif pontuacao == 0:
-        texto_fim = fonte.render("Fim de Jogo! Você zerou a pontuação!", True, branco)
+        texto_fim = fonte.render("Fim de Jogo! Você zerou a pontuação!", True, vermelho)
         tela.blit(texto_fim, (largura_tela // 2 - texto_fim.get_width() // 2, altura_tela // 2))    
     elif pontuacao >= 150:
         texto_fim = fonte.render("Parabéns! Você alcançou 150 pontos!", True, branco)
